@@ -4,12 +4,14 @@ export type EvaluationBadge = {
 };
 
 // hire_date/eval30/eval90 come from Postgres `date` columns (YYYY-MM-DD).
-// Comparing the strings directly avoids timezone drift from `new Date(...)`.
+// Comparing strings avoids timezone drift from `new Date(...)`, but only if
+// "today" itself is computed in the store's local time (Fortaleza, UTC-3) —
+// toISOString() reports UTC and flips to the next day hours early.
 export function getEvaluationBadge(
   evaluation30Date: string,
   evaluation90Date: string,
 ): EvaluationBadge {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Fortaleza" });
 
   if (today <= evaluation30Date) {
     return { label: "Em período de avaliação (30 dias)", tone: "blue" };

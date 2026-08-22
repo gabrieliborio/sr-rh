@@ -33,8 +33,11 @@ export async function GET(request: Request) {
     );
   }
 
+  // One-time display only — no-store keeps it out of any cache/CDN layer;
+  // it still hits browser history and this route is behind Supabase auth
+  // (proxy.ts), not admin-only, since the app has no role checks yet.
   return new NextResponse(
-    `<pre style="font-family:monospace;white-space:pre-wrap;padding:24px;">Copie este valor para GOOGLE_DRIVE_OAUTH_REFRESH_TOKEN no .env.local:\n\n${tokens.refresh_token}</pre>`,
-    { headers: { "Content-Type": "text/html; charset=utf-8" } },
+    `<pre style="font-family:monospace;white-space:pre-wrap;padding:24px;">Copie este valor para GOOGLE_DRIVE_OAUTH_REFRESH_TOKEN no .env.local, depois feche esta aba:\n\n${tokens.refresh_token}</pre>`,
+    { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } },
   );
 }

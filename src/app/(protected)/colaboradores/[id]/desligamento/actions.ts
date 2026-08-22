@@ -86,7 +86,7 @@ export async function saveTermination(
   };
 
   const { error } = terminationId
-    ? await supabase.from("terminations").update(row).eq("id", terminationId)
+    ? await supabase.from("terminations").update(row).eq("id", terminationId).eq("employee_id", employeeId)
     : await supabase.from("terminations").insert(row);
 
   if (error) {

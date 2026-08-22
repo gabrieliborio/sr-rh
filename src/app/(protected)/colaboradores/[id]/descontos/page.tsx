@@ -131,12 +131,20 @@ export default async function DescontosPage({
                     <Badge tone={SOURCE_TONE[event.source]}>{SOURCE_LABELS[event.source]}</Badge>
                   </td>
                   <td className="px-4 py-2 font-mono text-sm text-ink-muted">{event.dateRangeLabel}</td>
-                  <td className="px-4 py-2 font-mono text-sm text-ink">{event.daysCount}</td>
-                  <td className="px-4 py-2 text-sm text-ink-muted">{event.storeName ?? "—"}</td>
-                  <td className="px-4 py-2 font-mono text-sm text-ink">R$ {event.vtValue.toFixed(2)}</td>
-                  <td className="px-4 py-2 font-mono text-sm text-ink">R$ {event.mealValue.toFixed(2)}</td>
+                  <td className="px-4 py-2 font-mono text-sm text-ink">{event.unresolved ? "—" : event.daysCount}</td>
+                  <td className="px-4 py-2 text-sm text-ink-muted">
+                    {event.unresolved ? (
+                      <span className="text-danger">Loja não identificada</span>
+                    ) : (
+                      event.storeName ?? "—"
+                    )}
+                  </td>
+                  <td className="px-4 py-2 font-mono text-sm text-ink">{event.unresolved ? "—" : `R$ ${event.vtValue.toFixed(2)}`}</td>
+                  <td className="px-4 py-2 font-mono text-sm text-ink">{event.unresolved ? "—" : `R$ ${event.mealValue.toFixed(2)}`}</td>
                   <td className="px-4 py-2">
-                    {event.applied === null ? (
+                    {event.unresolved ? (
+                      <Badge tone="amber">Verificar histórico de loja</Badge>
+                    ) : event.applied === null ? (
                       <span className="text-xs text-ink-muted">—</span>
                     ) : (
                       <Badge tone={event.applied ? "green" : "amber"}>
@@ -152,7 +160,7 @@ export default async function DescontosPage({
                         </Button>
                       </form>
                     )}
-                    {event.source === "ferias" && !event.applied && (
+                    {event.source === "ferias" && !event.applied && !event.unresolved && (
                       <form action={markVacationDiscountApplied.bind(null, id, event.recordId)}>
                         <Button type="submit" variant="secondary" size="sm" className="!h-7 !px-2.5 !text-xs">
                           Marcar como aplicado

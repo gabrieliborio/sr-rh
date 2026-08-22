@@ -8,9 +8,6 @@ import {
   Store,
   ClipboardList,
   GraduationCap,
-  CalendarDays,
-  FileText,
-  Plug,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
@@ -19,9 +16,6 @@ export const NAV_ITEMS = [
   { href: "/lojas", label: "Lojas", icon: Store },
   { href: "/candidatos", label: "Recrutamento", icon: ClipboardList },
   { href: "/treinamentos", label: "Treinamentos", icon: GraduationCap },
-  { href: "/calendario", label: "Calendário", icon: CalendarDays },
-  { href: "/relatorios", label: "Relatórios", icon: FileText },
-  { href: "/integracoes", label: "Integrações", icon: Plug },
 ];
 
 function isActive(pathname: string, href: string) {

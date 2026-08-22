@@ -127,9 +127,14 @@ export default async function FichaColaboradorPage({
         <CardHeader
           title="Loja e benefícios"
           action={
-            <Link href={`/lojas/${employee.stores.id}`} className="text-sm text-tint hover:underline">
-              Ver loja →
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link href={`/colaboradores/${employee.id}/transferir`} className="text-sm text-tint hover:underline">
+                Transferir
+              </Link>
+              <Link href={`/lojas/${employee.stores.id}`} className="text-sm text-tint hover:underline">
+                Ver loja →
+              </Link>
+            </div>
           }
         />
         <CardBody className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
@@ -214,6 +219,12 @@ export default async function FichaColaboradorPage({
       <UniformSection employeeId={employee.id} />
       <DisciplinarySection employeeId={employee.id} />
       <TrainingsSection employeeId={employee.id} />
+
+      <div className="mt-8 border-t border-border pt-4 text-right">
+        <Link href={`/colaboradores/${employee.id}/excluir`} className="text-xs text-danger/70 hover:text-danger hover:underline">
+          Excluir colaborador
+        </Link>
+      </div>
     </div>
   );
 }

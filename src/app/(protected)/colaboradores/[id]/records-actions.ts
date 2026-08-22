@@ -60,36 +60,49 @@ export async function addNegotiation(employeeId: string, formData: FormData) {
   revalidateEmployee(employeeId);
 }
 
-export async function addTrainingAttendance(employeeId: string, formData: FormData) {
-  const trainingId = formData.get("training_id") as string;
-  const trainingDate = formData.get("training_date") as string;
-  if (!trainingId || !trainingDate) return;
-
-  const workloadRaw = formData.get("workload_hours") as string;
-  const certificateCode = crypto.randomUUID().slice(0, 8).toUpperCase();
+export async function addEmployeeToSession(employeeId: string, formData: FormData) {
+  const sessionId = formData.get("session_id") as string;
+  if (!sessionId) return;
 
   const supabase = await createClient();
-  await supabase.from("training_attendances").insert({
-    employee_id: employeeId,
-    training_id: trainingId,
-    attended: formData.get("attended") === "on",
-    training_date: trainingDate,
-    workload_hours: workloadRaw ? Number(workloadRaw) : null,
-    signed_by_name: (formData.get("signed_by_name") as string) || null,
-    signed_by_role: (formData.get("signed_by_role") as string) || null,
-    certificate_code: certificateCode,
-  });
+
+  const { data: existing } = await supabase
+    .from("training_attendances")
+    .select("certificate_code")
+    .eq("session_id", sessionId)
+    .eq("employee_id", employeeId)
+    .maybeSingle<{ certificate_code: string | null }>();
+
+  await supabase.from("training_attendances").upsert(
+    {
+      session_id: sessionId,
+      employee_id: employeeId,
+      attended: true,
+      certificate_code: existing?.certificate_code ?? crypto.randomUUID().slice(0, 8).toUpperCase(),
+    },
+    { onConflict: "session_id,employee_id" },
+  );
 
   revalidateEmployee(employeeId);
+  revalidatePath(`/treinamentos/${sessionId}`);
 }
 
 export async function addVacation(employeeId: string, formData: FormData) {
   const startDate = formData.get("start_date") as string;
   const endDate = formData.get("end_date") as string;
-  if (!startDate || !endDate) return;
+  if (!startDate || !endDate || endDate < startDate) return;
 
   const paid = formData.get("paid") === "on";
   const supabase = await createClient();
+
+  const baseRow = {
+    employee_id: employeeId,
+    start_date: startDate,
+    end_date: endDate,
+    paid,
+    negotiated: formData.get("negotiated") === "on",
+    notes: (formData.get("notes") as string) || null,
+  };
 
   // Only unpaid vacation days discount VT/meal — paid ones stay at zero.
   if (!paid) {
@@ -99,12 +112,7 @@ export async function addVacation(employeeId: string, formData: FormData) {
       const { vtDiscountValue, mealDiscountValue, totalDiscountValue } = calculateDiscount(store, daysCount);
 
       await supabase.from("vacations").insert({
-        employee_id: employeeId,
-        start_date: startDate,
-        end_date: endDate,
-        paid,
-        negotiated: formData.get("negotiated") === "on",
-        notes: (formData.get("notes") as string) || null,
+        ...baseRow,
         days_count: daysCount,
         discount_calculated: true,
         vt_discount_value: vtDiscountValue,
@@ -115,17 +123,16 @@ export async function addVacation(employeeId: string, formData: FormData) {
       revalidateEmployee(employeeId);
       return;
     }
+
+    // Store couldn't be resolved (gap in employee_store_history) — still
+    // record the vacation, but leave discount_calculated false so it shows
+    // up as needing attention on the descontos page instead of vanishing.
+    await supabase.from("vacations").insert(baseRow);
+    revalidateEmployee(employeeId);
+    return;
   }
 
-  await supabase.from("vacations").insert({
-    employee_id: employeeId,
-    start_date: startDate,
-    end_date: endDate,
-    paid,
-    negotiated: formData.get("negotiated") === "on",
-    notes: (formData.get("notes") as string) || null,
-  });
-
+  await supabase.from("vacations").insert(baseRow);
   revalidateEmployee(employeeId);
 }
 

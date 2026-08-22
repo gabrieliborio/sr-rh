@@ -2,6 +2,14 @@
 -- request to come from an authenticated Supabase Auth session — there is no
 -- per-row ownership or role-based restriction yet (see `roles`/`profiles`
 -- for where that would plug in later).
+--
+-- ⚠ Deliberate, revisit-when: today only one login exists (the RH admin).
+-- The moment a second Supabase Auth user is created — a store manager, a
+-- second RH person, anyone — that account gets full read/write on every
+-- employee's salary/CPF and can terminate anyone, since nothing here or in
+-- any Server Action checks `profiles.role_id`. Build real role checks
+-- (RLS policies keyed off `profiles`/`roles`, or at minimum a check in each
+-- Server Action) before adding that second login.
 
 do $$
 declare

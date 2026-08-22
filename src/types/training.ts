@@ -5,17 +5,34 @@ export type Training = {
   default_workload_hours: number | null;
 };
 
-export type TrainingAttendance = {
+export type TrainingSession = {
   id: string;
-  employee_id: string;
   training_id: string;
-  attended: boolean;
-  training_date: string;
+  session_date: string;
   workload_hours: number | null;
-  signed_by_name: string | null;
-  signed_by_role: string | null;
-  certificate_code: string | null;
-  certificate_pdf_url: string | null;
+  instructor_name: string | null;
+  instructor_role: string | null;
+  topics_covered: string | null;
   created_at: string;
   trainings?: { name: string } | null;
+};
+
+// Mirrors the v_training_sessions view — used for the /treinamentos list.
+export type TrainingSessionSummary = TrainingSession & {
+  training_name: string;
+  attended_count: number;
+  roster_count: number;
+};
+
+export type TrainingAttendance = {
+  id: string;
+  session_id: string;
+  employee_id: string;
+  attended: boolean;
+  certificate_code: string | null;
+  created_at: string;
+  training_sessions?: Pick<
+    TrainingSession,
+    "session_date" | "workload_hours" | "instructor_name" | "instructor_role" | "topics_covered"
+  > & { trainings: { name: string } | null };
 };

@@ -4,9 +4,9 @@ export type CertificateData = {
   employeeName: string;
   trainingName: string;
   workloadHours: number | null;
-  trainingDate: string;
-  signedByName: string | null;
-  signedByRole: string | null;
+  sessionDate: string;
+  instructorName: string | null;
+  instructorRole: string | null;
   certificateCode: string;
 };
 
@@ -43,15 +43,15 @@ function CertificateDocument({ data }: { data: CertificateData }) {
             Certificamos que <Text style={styles.name}>{data.employeeName}</Text> participou do
             treinamento <Text style={styles.training}>{data.trainingName}</Text>
             {data.workloadHours ? `, com carga horária de ${data.workloadHours} horas,` : ""} realizado
-            em {data.trainingDate}.
+            em {data.sessionDate}.
           </Text>
         </View>
 
-        {(data.signedByName || data.signedByRole) && (
+        {(data.instructorName || data.instructorRole) && (
           <View style={styles.signature}>
             <View style={styles.signatureLine} />
-            {data.signedByName && <Text style={styles.signatureName}>{data.signedByName}</Text>}
-            {data.signedByRole && <Text style={styles.signatureRole}>{data.signedByRole}</Text>}
+            {data.instructorName && <Text style={styles.signatureName}>{data.instructorName}</Text>}
+            {data.instructorRole && <Text style={styles.signatureRole}>{data.instructorRole}</Text>}
           </View>
         )}
 

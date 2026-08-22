@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { sendCalendarNotification } from "./actions";
+import { sendCalendarNotification } from "./calendar-actions";
 import type { CalendarEventType } from "@/lib/calendar";
 
 export function CalendarNotifyButton({

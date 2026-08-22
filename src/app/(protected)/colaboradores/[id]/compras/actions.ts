@@ -12,7 +12,7 @@ const purchaseSchema = z.object({
   purchase_date: z.string().min(1, "Informe a data da compra"),
   os_number: z.string().optional(),
   total_value: z.coerce.number().positive("Informe um valor total válido"),
-  installments_count: z.coerce.number().int().min(1, "Informe ao menos 1 parcela"),
+  installments_count: z.coerce.number().int().min(1, "Informe ao menos 1 parcela").max(48, "Máximo de 48 parcelas"),
 });
 
 export async function createPurchase(
@@ -66,7 +66,12 @@ export async function createPurchase(
     };
   });
 
-  await supabase.from("employee_purchase_installments").insert(installments);
+  const { error: installmentsError } = await supabase.from("employee_purchase_installments").insert(installments);
+
+  if (installmentsError) {
+    await supabase.from("employee_purchases").delete().eq("id", purchase.id);
+    return { error: "Não foi possível salvar as parcelas. Tente novamente." };
+  }
 
   revalidatePath(`/colaboradores/${employeeId}/compras`);
   redirect(`/colaboradores/${employeeId}/compras`);

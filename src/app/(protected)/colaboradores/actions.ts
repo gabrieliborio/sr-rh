@@ -124,3 +124,76 @@ function translateEmployeeError(message: string) {
   if (message.includes("employees_employee_number_key")) return "Já existe um colaborador com essa matrícula.";
   return "Não foi possível salvar o colaborador. Tente novamente.";
 }
+
+export type TransferFormState = { error: string | null };
+
+export async function transferEmployeeStore(
+  employeeId: string,
+  _prevState: TransferFormState,
+  formData: FormData,
+): Promise<TransferFormState> {
+  const newStoreId = formData.get("store_id") as string;
+  if (!newStoreId) return { error: "Selecione a loja de destino." };
+
+  const supabase = await createClient();
+
+  const { data: employee } = await supabase
+    .from("employees")
+    .select("store_id")
+    .eq("id", employeeId)
+    .maybeSingle<{ store_id: string }>();
+
+  if (employee?.store_id === newStoreId) {
+    return { error: "Selecione uma loja diferente da atual." };
+  }
+
+  // employee_store_history is kept in sync automatically by a DB trigger
+  // on this update (closes the open row, opens a new one from today).
+  const { error } = await supabase.from("employees").update({ store_id: newStoreId }).eq("id", employeeId);
+  if (error) {
+    return { error: "Não foi possível transferir o colaborador. Tente novamente." };
+  }
+
+  revalidatePath(`/colaboradores/${employeeId}`);
+  revalidatePath("/colaboradores");
+  redirect(`/colaboradores/${employeeId}`);
+}
+
+export type DeleteEmployeeFormState = { error: string | null };
+
+// Confirmation happens client-side (typed-name match) — state/formData are
+// unused but required by useActionState's action signature.
+export async function deleteEmployee(
+  employeeId: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _prevState: DeleteEmployeeFormState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _formData: FormData,
+): Promise<DeleteEmployeeFormState> {
+  const supabase = await createClient();
+
+  const { data: managedStores } = await supabase
+    .from("stores")
+    .select("name")
+    .eq("manager_id", employeeId)
+    .returns<{ name: string }[]>();
+
+  if (managedStores && managedStores.length > 0) {
+    const names = managedStores.map((s) => s.name).join(", ");
+    return {
+      error: `Não é possível excluir: este colaborador é o gestor responsável da loja ${names}. Troque o gestor na ficha da loja antes de excluir.`,
+    };
+  }
+
+  // Recruitment history keeps a soft link to the hired employee — clear it
+  // rather than blocking the delete, the candidate record itself is untouched.
+  await supabase.from("candidates").update({ hired_employee_id: null }).eq("hired_employee_id", employeeId);
+
+  const { error } = await supabase.from("employees").delete().eq("id", employeeId);
+  if (error) {
+    return { error: "Não foi possível excluir o colaborador. Tente novamente." };
+  }
+
+  revalidatePath("/colaboradores");
+  redirect("/colaboradores");
+}
